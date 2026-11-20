@@ -1,0 +1,126 @@
+:root{
+  --ai:#0B1420;        /* 藍夜 */
+  --gunjo:#16263C;     /* 群青 */
+  --shu:#C8402F;       /* 朱 */
+  --kin:#C9A24B;       /* 金 */
+  --washi:#F3ECDD;     /* 生成 */
+  --sumi:#16151A;      /* 墨 */
+}
+*{box-sizing:border-box}
+html,body{height:100%}
+body{
+  margin:0;
+  background:radial-gradient(120% 120% at 50% 40%, #0A1220 0%, #05080D 70%, #020407 100%);
+  display:grid;place-items:center;
+  overflow:hidden;
+  font-family:'Zen Kaku Gothic New',system-ui,sans-serif;
+  -webkit-font-smoothing:antialiased;
+}
+.stage{
+  position:relative;
+  width:min(100vw, calc(100vh * 16 / 9));
+  aspect-ratio:16/9;
+  cursor:pointer;
+  outline:none;
+  -webkit-tap-highlight-color:transparent;
+  box-shadow:0 60px 140px -40px rgba(0,0,0,.9);
+  user-select:none;
+}
+.stage::after{ /* 内側ビネット */
+  content:"";position:absolute;inset:0;pointer-events:none;
+  box-shadow:inset 0 0 120px 30px rgba(2,5,10,.55);
+}
+.stage:focus-visible{outline:2px solid rgba(201,162,75,.85);outline-offset:-2px}
+svg{display:block;width:100%;height:100%}
+
+/* ---------- 題字 ---------- */
+.title-ch{font-family:'Shippori Mincho B1',serif;font-weight:800;fill:var(--washi);letter-spacing:0}
+.title-sub{font-family:'Zen Kaku Gothic New',sans-serif;fill:#8497AE;letter-spacing:.16em;font-size:17px}
+.side-label{font-family:'Zen Kaku Gothic New',sans-serif;fill:#5E7189;letter-spacing:.5em;font-size:12px}
+
+/* ---------- 箱のシェイク ---------- */
+#box{transform-box:view-box;transform-origin:1040px 740px;will-change:transform}
+.stage.shaking #box{animation:shake 1.05s cubic-bezier(.36,.07,.19,.97) both}
+@keyframes shake{
+  0%{transform:translate(0,0) rotate(0deg)}
+  7%{transform:translate(-9px,-3px) rotate(-2.2deg)}
+  14%{transform:translate(11px,1px) rotate(2.4deg)}
+  21%{transform:translate(-13px,-1px) rotate(-2.6deg)}
+  29%{transform:translate(13px,-3px) rotate(2.7deg)}
+  37%{transform:translate(-10px,2px) rotate(-2.1deg)}
+  45%{transform:translate(11px,-1px) rotate(2.2deg)}
+  53%{transform:translate(-8px,0) rotate(-1.6deg)}
+  62%{transform:translate(8px,-1px) rotate(1.7deg)}
+  71%{transform:translate(-5px,1px) rotate(-1deg)}
+  80%{transform:translate(5px,0) rotate(.9deg)}
+  89%{transform:translate(-2px,0) rotate(-.4deg)}
+  100%{transform:translate(0,0) rotate(0deg)}
+}
+#sticks{transform-box:view-box;transform-origin:1040px 505px}
+.stage.shaking #sticks{animation:rattle .09s steps(2,end) infinite alternate}
+@keyframes rattle{
+  from{transform:translate(0,0) rotate(-.8deg)}
+  to{transform:translate(0,-7px) rotate(.9deg)}
+}
+
+/* ---------- 穴から出る籤の先 ---------- */
+#slipTip{opacity:0;transform:translateY(40px);transition:transform .34s cubic-bezier(.2,1.5,.35,1),opacity .18s ease}
+.stage.tipping #slipTip{opacity:1;transform:translateY(-58px)}
+
+/* ---------- 灯り ---------- */
+#lanternGlow{animation:flicker 5.5s ease-in-out infinite}
+@keyframes flicker{
+  0%,100%{opacity:.85;transform:scale(1)}
+  22%{opacity:.68;transform:scale(.96)}
+  47%{opacity:.95;transform:scale(1.03)}
+  71%{opacity:.74;transform:scale(.98)}
+}
+#toriiGlow{animation:flicker 7.2s ease-in-out infinite reverse}
+
+/* ---------- 塵 ---------- */
+.dust{animation:drift linear infinite}
+@keyframes drift{
+  0%{transform:translate(0,0);opacity:0}
+  15%{opacity:.9}
+  85%{opacity:.7}
+  100%{transform:translate(var(--dx,10px),-120px);opacity:0}
+}
+
+/* ---------- 暗転 ---------- */
+#dimmer{transition:opacity .55s ease}
+.stage.revealed #dimmer{opacity:.52}
+
+/* ---------- 紙 ---------- */
+#paper{
+  opacity:0;
+  transform-box:view-box;
+  transform-origin:790px 455px;
+  transform:translate(250px,28px) scale(.05) rotate(7deg);
+  transition:transform .6s cubic-bezier(.5,0,.75,0), opacity .3s ease;
+  will-change:transform,opacity;
+}
+.stage.revealed #paper{opacity:1;animation:fly .98s cubic-bezier(.18,.9,.28,1) both}
+@keyframes fly{
+  0%{transform:translate(250px,28px) scale(.05) rotate(8deg);opacity:0}
+  16%{opacity:1}
+  42%{transform:translate(162px,-104px) scale(.30) rotate(-5deg)}
+  68%{transform:translate(46px,-28px) scale(.84) rotate(2deg)}
+  86%{transform:translate(-6px,4px) scale(1.015) rotate(-.4deg)}
+  100%{transform:translate(0,0) scale(1) rotate(0deg);opacity:1}
+}
+.ri{
+  opacity:0;transform:translateY(14px);transform-box:fill-box;transform-origin:center;
+  transition:opacity .45s ease,transform .6s cubic-bezier(.16,1,.3,1);
+  transition-delay:0s;
+}
+.stage.revealed .ri{opacity:1;transform:none;transition-delay:var(--d,.95s)}
+#pStamp{transform-box:fill-box;transform-origin:center;transform:scale(1.35) rotate(-8deg);opacity:0;
+  transition:transform .5s cubic-bezier(.2,1.6,.3,1),opacity .3s ease}
+.stage.revealed #pStamp{transform:scale(1) rotate(-3deg);opacity:1;transition-delay:1.5s}
+
+/* ---------- CTA ---------- */
+#cta{cursor:pointer}
+#ctaDot{animation:blink 2.6s ease-in-out infinite}
+@keyframes blink{0%,100%{opacity:1}50%{opacity:.25}}
+#ctaText{font-family:'Zen Kaku Gothic New',sans-serif;font-size:22px;fill:var(--washi);letter-spacing:.06em}
+

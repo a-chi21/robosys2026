@@ -50,3 +50,17 @@ FORTUNES = [
         "trip": "遠出は控えめに",
     },
 ]
+
+
+def main() -> int:
+    text = sys.stdin.read()
+    if not text.strip():
+        print("omikuji: 標準入力が空です。願い事を入力してください。",
+              file=sys.stderr)
+        return 1
+    print(format_fortune(pick(text)))
+    return 0
+
+
+if __name__ == "__main__":
+    sys.exit(main())
