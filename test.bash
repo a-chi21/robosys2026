@@ -1,23 +1,29 @@
-  #!/bin/bash
-  # SPDX-FileCopyrightText: 2026 Taro Suzuki
-  # SPDX-License-Identifier: BSD-3-Clause
+#!/bin/bash
+# SPDX-FileCopyrightText: 2026 Taro Suzuki
+# SPDX-License-Identifier: BSD-3-Clause
 
-  ng () {                               # 関数ngの定義（P18と同じ）
-          echo ${1}行目のテスト失敗
-          res=1                          # 失敗したことを記録
-  }
+ng () {
+    echo ${1}行目のテスト失敗
+    res=1
+}
 
-   res=0                                  # 0: 失敗なし（ngが呼ばれると1になる）
+res=0
 
-   out=$(seq 5 | ./plus)                  # 表の1行目: plusの出力を変数outに記録
-   [ "${out}" = 15 ] || ng "$LINENO"      # 期待する出力（15）でなければngを呼び出す
-   ### STRANGE INPUT ###
-   out=$(echo あ | ./plus)           #計算できない値を入力してみる
-   [ "$?" = 1 ]      || ng "$LINENO" #終了ステータスが1なのを確認
-   [ "${out}" = "" ] || ng "$LINENO" #上の行と入れ替えるとダメ（なぜ？）
+# テスト1: 普通に実行して出力が空でない
+out=$(echo "明日の会議" | ./omikuji)
+[ -n "$out" ] || ng "$LINENO"
 
-   out=$(echo | ./plus)              #なにも入力しない
-   [ "$?" = 1 ]      || ng "$LINENO" #これも異常終了する
-   [ "${out}" = "" ] || ng "$LINENO"
-   [ "${res}" = 0 ] && echo OK            # 通ったのが（人間に）分かるように表示
-   exit $res
+# テスト2: 同じ入力なら同じ結果（決定論性）
+a=$(echo "明日の会議" | ./omikuji)
+b=$(echo "明日の会議" | ./omikuji)
+[ "$a" = "$b" ] || ng "$LINENO"
+
+# テスト3: 空入力はエラー終了する
+echo "" | ./omikuji 2>/dev/null
+[ "$?" = 1 ] || ng "$LINENO"
+
+# テスト4: 出力に「願望:」が含まれる
+echo "テスト" | ./omikuji | grep -q "願望:" || ng "$LINENO"
+
+[ $res = 0 ] && echo OK
+exit $res
