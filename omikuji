@@ -73,7 +73,7 @@ def format_text(f: dict) -> str:
 def format_html(f: dict) -> str:
     """テンプレートHTMLを読み込み、結果を埋め込んで返す。"""
     script_dir = os.path.dirname(os.path.abspath(__file__))
-    template_path = os.path.join(script_dir, "index.html")
+    template_path = os.path.join(script_dir, "template.html")
     with open(template_path, encoding="utf-8") as fp:
         html = fp.read()
 
