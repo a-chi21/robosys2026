@@ -374,6 +374,67 @@ svg{display:block;width:100%;height:100%}
     }
   }
 
+  /* ---------- 音 ---------- */
+  let ac = null, nb = null, muted = false;
+  function ensureAudio(){
+    if (!ac){
+      try { ac = new (window.AudioContext || window.webkitAudioContext)(); } catch(e){ return; }
+      const len = Math.floor(ac.sampleRate * .5);
+      nb = ac.createBuffer(1, len, ac.sampleRate);
+      const d = nb.getChannelData(0);
+      for (let i = 0; i < len; i++) d[i] = Math.random() * 2 - 1;
+    }
+    if (ac.state === 'suspended') ac.resume();
+  }
+  function clack(when, vol, freq){
+    if (!ac || muted) return;
+    const s = ac.createBufferSource(); s.buffer = nb;
+    const bp = ac.createBiquadFilter(); bp.type = 'bandpass';
+    bp.frequency.value = freq; bp.Q.value = 1.1;
+    const g = ac.createGain();
+    g.gain.setValueAtTime(0, when);
+    g.gain.linearRampToValueAtTime(vol, when + .004);
+    g.gain.exponentialRampToValueAtTime(.0008, when + .085);
+    s.connect(bp).connect(g).connect(ac.destination);
+    s.start(when); s.stop(when + .12);
+  }
+  const sfx = {
+    rattle(){
+      ensureAudio(); if (!ac) return;
+      const t = ac.currentTime;
+      for (let i = 0; i < 17; i++){
+        clack(t + i * .052 + Math.random() * .028, .06 + Math.random() * .05, 780 + Math.random() * 900);
+      }
+    },
+    paper(){
+      ensureAudio(); if (!ac || muted) return;
+      const t = ac.currentTime;
+      const s = ac.createBufferSource(); s.buffer = nb;
+      const bp = ac.createBiquadFilter(); bp.type = 'bandpass'; bp.Q.value = .8;
+      bp.frequency.setValueAtTime(2600, t);
+      bp.frequency.exponentialRampToValueAtTime(700, t + .4);
+      const g = ac.createGain();
+      g.gain.setValueAtTime(.0001, t);
+      g.gain.linearRampToValueAtTime(.05, t + .05);
+      g.gain.exponentialRampToValueAtTime(.0005, t + .42);
+      s.connect(bp).connect(g).connect(ac.destination);
+      s.start(t); s.stop(t + .45);
+    },
+    chime(){
+      ensureAudio(); if (!ac || muted) return;
+      const t = ac.currentTime;
+      [880, 1320, 1760].forEach((f, i) => {
+        const o = ac.createOscillator(); o.type = 'sine'; o.frequency.value = f;
+        const g = ac.createGain();
+        g.gain.setValueAtTime(0, t + i * .06);
+        g.gain.linearRampToValueAtTime(.045 / (i + 1), t + i * .06 + .02);
+        g.gain.exponentialRampToValueAtTime(.0004, t + i * .06 + 1.4);
+        o.connect(g).connect(ac.destination);
+        o.start(t + i * .06); o.stop(t + i * .06 + 1.5);
+      });
+    }
+  };
+
   function setFortune(f){
     const [a, b] = Array.from(f.rank);
     document.getElementById('pR1').textContent = a || '';
@@ -398,11 +459,14 @@ svg{display:block;width:100%;height:100%}
     stage.classList.add('shaking');
     ctaText.textContent = '…';
     buildSticks();
+    sfx.rattle();
     await wait(800);
     stage.classList.add('tipping');
+    sfx.paper();
     await wait(300);
     stage.classList.remove('shaking', 'tipping');
     stage.classList.add('revealed');
+    sfx.chime();
     ctaText.textContent = 'もう一度見る';
     await wait(400);
     busy = false;
@@ -410,10 +474,20 @@ svg{display:block;width:100%;height:100%}
 
   stage.addEventListener('click', e => {
     if (e.target.closest('#mute')) return;
+    ensureAudio();
     draw();
   });
   stage.addEventListener('keydown', e => {
-    if (e.key === 'Enter' || e.key === ' '){ e.preventDefault(); draw(); }
+    if (e.key === 'Enter' || e.key === ' '){ e.preventDefault(); ensureAudio(); draw(); }
+  });
+
+  const mute = document.getElementById('mute');
+  mute.addEventListener('click', e => {
+    e.stopPropagation();
+    muted = !muted;
+    stage.classList.toggle('muted', muted);
+    document.getElementById('muteSlash').setAttribute('opacity', muted ? '1' : '0');
+    if (!muted){ ensureAudio(); }
   });
 
   buildSky();
@@ -421,5 +495,6 @@ svg{display:block;width:100%;height:100%}
   setFortune(FORTUNE);
 })();
 </script>
+
 </body>
 </html>
