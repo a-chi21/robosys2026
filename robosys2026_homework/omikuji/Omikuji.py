@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-# SPDX-FileCopyrightText: 2026 kaifuchi mao
+# SPDX-FileCopyrightText: 2026 Your Name
 # SPDX-License-Identifier: BSD-3-Clause
 """omikuji: 標準入力の願い事から運勢を引く決定論的おみくじコマンド。"""
 
@@ -50,6 +50,23 @@ FORTUNES = [
         "trip": "遠出は控えめに",
     },
 ]
+
+
+def pick(text: str) -> dict:
+    """入力テキストのSHA-256から決定論的に運勢を1つ選ぶ。"""
+    normalized = text.strip()
+    digest = hashlib.sha256(normalized.encode("utf-8")).digest()
+    index = int.from_bytes(digest[:8], "big") % len(FORTUNES)
+    return FORTUNES[index]
+
+
+def format_fortune(f: dict) -> str:
+    return (
+        f"{f['rank']} ─ {f['lead']}\n"
+        f"願望: {f['wish']}\n"
+        f"待人: {f['wait']}\n"
+        f"旅  : {f['trip']}"
+    )
 
 
 def main() -> int:
