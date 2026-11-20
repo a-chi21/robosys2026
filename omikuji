@@ -3,7 +3,9 @@
 # SPDX-License-Identifier: BSD-3-Clause
 """omikuji: 標準入力の願い事から運勢を引く決定論的おみくじコマンド。"""
 
+import argparse
 import hashlib
+import os
 import sys
 
 FORTUNES = [
@@ -53,14 +55,13 @@ FORTUNES = [
 
 
 def pick(text: str) -> dict:
-    """入力テキストのSHA-256から決定論的に運勢を1つ選ぶ。"""
     normalized = text.strip()
     digest = hashlib.sha256(normalized.encode("utf-8")).digest()
     index = int.from_bytes(digest[:8], "big") % len(FORTUNES)
     return FORTUNES[index]
 
 
-def format_fortune(f: dict) -> str:
+def format_text(f: dict) -> str:
     return (
         f"{f['rank']} ─ {f['lead']}\n"
         f"願望: {f['wish']}\n"
@@ -69,13 +70,45 @@ def format_fortune(f: dict) -> str:
     )
 
 
+def format_html(f: dict) -> str:
+    """テンプレートHTMLを読み込み、結果を埋め込んで返す。"""
+    script_dir = os.path.dirname(os.path.abspath(__file__))
+    template_path = os.path.join(script_dir, "index.html")
+    with open(template_path, encoding="utf-8") as fp:
+        html = fp.read()
+
+    rank = f["rank"]
+    replacements = {
+        "{{RANK}}": rank,
+        "{{RANK1}}": rank[0] if len(rank) > 0 else "",
+        "{{RANK2}}": rank[1] if len(rank) > 1 else "",
+        "{{LEAD}}": f["lead"],
+        "{{WISH}}": f["wish"],
+        "{{WAIT}}": f["wait"],
+        "{{TRIP}}": f["trip"],
+    }
+    for key, value in replacements.items():
+        html = html.replace(key, value)
+    return html
+
+
 def main() -> int:
+    parser = argparse.ArgumentParser(description="おみくじを引く")
+    parser.add_argument("--html", action="store_true",
+                        help="結果を埋め込んだHTMLを標準出力に出す")
+    args = parser.parse_args()
+
     text = sys.stdin.read()
     if not text.strip():
         print("omikuji: 標準入力が空です。願い事を入力してください。",
               file=sys.stderr)
         return 1
-    print(format_fortune(pick(text)))
+
+    fortune = pick(text)
+    if args.html:
+        print(format_html(fortune))
+    else:
+        print(format_text(fortune))
     return 0
 
 
